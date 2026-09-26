@@ -1,0 +1,165 @@
+<form class="form-horizontal">
+  <div class="alert">
+    Every value here ends up in a G-code command. The plugin checks each value when you
+    save and again before each run. It refuses a point outside the plate.
+  </div>
+
+  <h4>Heat and brush</h4>
+  <div class="control-group">
+    <label class="control-label">Bed, &deg;C</label>
+    <div class="controls">
+      <input type="number" step="1" class="input-mini"
+             data-bind="value: settings.plugins.nozzletouch.bed_temp">
+      <span class="help-block">
+        The plate is measured at this temperature, so use the one you print at. The bed
+        stays hot for the whole run.
+      </span>
+    </div>
+  </div>
+  <div class="control-group">
+    <label class="control-label">T0 and T1, &deg;C</label>
+    <div class="controls">
+      <input type="number" step="5" class="input-mini"
+             data-bind="value: settings.plugins.nozzletouch.t0_temp">
+      <input type="number" step="5" class="input-mini"
+             data-bind="value: settings.plugins.nozzletouch.t1_temp">
+      <span class="help-block">
+        Hot enough to soften the filament in each nozzle, so the brush can remove it.
+      </span>
+    </div>
+  </div>
+  <div class="control-group">
+    <label class="control-label">Retract, mm</label>
+    <div class="controls">
+      <input type="number" step="0.5" class="input-mini"
+             data-bind="value: settings.plugins.nozzletouch.retract_mm">
+      <span class="help-block">
+        Pulls the filament back so the hot nozzles do not ooze while you brush them. The
+        next print primes it again.
+      </span>
+    </div>
+  </div>
+  <div class="control-group">
+    <label class="control-label">Park X, Y, Z</label>
+    <div class="controls">
+      <input type="text" class="input-medium"
+             data-bind="value: settings.plugins.nozzletouch.park">
+      <span class="help-block">Where the head waits while you brush the nozzles.</span>
+    </div>
+  </div>
+  <div class="control-group">
+    <label class="control-label">Brush time limit, min</label>
+    <div class="controls">
+      <input type="number" step="5" class="input-mini"
+             data-bind="value: settings.plugins.nozzletouch.wipe_timeout_min">
+      <span class="help-block">
+        If nobody presses Continue in this time, the heaters go off and the run stops.
+      </span>
+    </div>
+  </div>
+
+  <h4>Cool</h4>
+  <div class="control-group">
+    <label class="control-label">Touch below, &deg;C</label>
+    <div class="controls">
+      <input type="number" step="5" class="input-mini"
+             data-bind="value: settings.plugins.nozzletouch.cool_below">
+      <span class="help-block">
+        The nozzles touch the plate only when both are below this. Soft plastic on a
+        warm tip squashes and reads high.
+      </span>
+    </div>
+  </div>
+  <div class="control-group">
+    <label class="control-label">Settle, s</label>
+    <div class="controls">
+      <input type="number" step="10" class="input-mini"
+             data-bind="value: settings.plugins.nozzletouch.settle_s">
+      <span class="help-block">A wait after the fans stop, so the plate stops moving.</span>
+    </div>
+  </div>
+
+  <h4>Touch</h4>
+  <div class="control-group">
+    <label class="control-label">Passes</label>
+    <div class="controls">
+      <input type="number" step="1" class="input-mini"
+             data-bind="value: settings.plugins.nozzletouch.passes">
+      <span class="help-block">
+        Each pass touches all 100 reachable nodes and takes about 25 min. The mesh is
+        the mean of the passes. One pass is good to about 0.03 mm, two to about 0.02 mm.
+      </span>
+    </div>
+  </div>
+  <div class="control-group">
+    <label class="control-label">Reference X, Y</label>
+    <div class="controls">
+      <input type="text" class="input-medium"
+             data-bind="value: settings.plugins.nozzletouch.reference">
+      <span class="help-block">
+        Touched before each row. While the machine sits hot the trip height drifts by
+        up to 0.2 mm an hour, and this point measures the drift so it can be removed.
+      </span>
+    </div>
+  </div>
+  <div class="control-group">
+    <label class="control-label">Sensor travel, mm</label>
+    <div class="controls">
+      <input type="number" step="0.01" class="input-mini"
+             data-bind="value: settings.plugins.nozzletouch.trip_to_zero">
+      <span class="help-block">
+        How far the carriage moves after the nozzle first touches the plate, before its
+        sensor trips. The mesh adds it back, so G-code Z 0 sits on the plate. 0.72 mm
+        was measured with a clean nozzle on 2026-09-25. Change it only after a first
+        layer test says to.
+      </span>
+    </div>
+  </div>
+
+  <h4>T1 height</h4>
+  <div class="control-group">
+    <label class="control-label">Points</label>
+    <div class="controls">
+      <input type="text" class="input-xxlarge"
+             data-bind="value: settings.plugins.nozzletouch.offset_points">
+      <span class="help-block">
+        X, Y pairs with a semicolon between them. Both nozzles touch each point. The
+        new offset makes both nozzles trip at the same height on average.
+      </span>
+    </div>
+  </div>
+  <div class="control-group">
+    <div class="controls">
+      <label class="checkbox">
+        <input type="checkbox" data-bind="checked: settings.plugins.nozzletouch.write_offset">
+        Write the new T1 offset with M218. The toolhead stores it at once.
+      </label>
+    </div>
+  </div>
+
+  <h4>After the run</h4>
+  <div class="control-group">
+    <div class="controls">
+      <label class="checkbox">
+        <input type="checkbox" data-bind="checked: settings.plugins.nozzletouch.bed_off_at_end">
+        Turn the bed off at the end.
+      </label>
+    </div>
+  </div>
+
+  <h4>Serial</h4>
+  <div class="control-group">
+    <div class="controls">
+      <label class="checkbox">
+        <input type="checkbox" data-bind="checked: settings.plugins.nozzletouch.fix_split_ok">
+        Restore a lost acknowledgement at all times, not only during a run.
+      </label>
+      <span class="help-block">
+        When a nozzle is pushed up, the toolhead sends "active extruder mismatch" at once.
+        When that message lands inside the firmware's "ok", OctoPrint loses the ok and
+        stops sending. The plugin sees the damaged line and gives OctoPrint the ok back.
+        During a run this is always on.
+      </span>
+    </div>
+  </div>
+</form>

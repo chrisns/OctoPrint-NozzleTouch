@@ -1,0 +1,70 @@
+.nozzletouch-steps {
+    margin: 0 0 12px 22px;
+}
+
+.nozzletouch-steps li {
+    color: #999;
+    line-height: 22px;
+}
+
+.nozzletouch-steps li.nozzletouch-step-done {
+    color: inherit;
+    text-decoration: line-through;
+}
+
+.nozzletouch-steps li.nozzletouch-step-active {
+    color: inherit;
+    font-weight: bold;
+}
+
+.nozzletouch-wipe h4 {
+    margin-top: 0;
+}
+
+.nozzletouch-status {
+    margin-top: 10px;
+}
+
+.nozzletouch-log {
+    max-height: 18em;
+    overflow-y: auto;
+    font-size: 11px;
+    white-space: pre-wrap;
+    /* Bootstrap's pre breaks words anywhere; break between words instead */
+    word-break: normal;
+    overflow-wrap: break-word;
+}
+
+.nozzletouch > p,
+.nozzletouch > .alert,
+.nozzletouch-steps,
+.nozzletouch-summary,
+.nozzletouch-t1 {
+    max-width: 600px;
+}
+
+.nozzletouch > h4 {
+    margin-top: 18px;
+}
+
+.nozzletouch-summary th {
+    width: 38%;
+    font-weight: normal;
+    color: #777;
+}
+
+.nozzletouch-views {
+    margin: 4px 0 8px;
+}
+
+.nozzletouch-map {
+    max-width: 560px;
+}
+
+.nozzletouch-map svg {
+    display: block;
+}
+
+.nozzletouch-caption {
+    font-size: 12px;
+}

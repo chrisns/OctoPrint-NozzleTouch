@@ -1,0 +1,106 @@
+<div id="nozzletouch_tab" class="nozzletouch">
+  <h4>Calibrate</h4>
+  <p class="muted">
+    One run heats both nozzles and retracts the filament, waits while you brush the
+    nozzles, and cools them. It then touches the plate with the cold T0 nozzle at every
+    mesh node and saves the mesh. Last, it touches a few points with both nozzles and
+    sets the T1 height.
+  </p>
+
+  <ol class="nozzletouch-steps" data-bind="foreach: steps">
+    <li data-bind="css: {'nozzletouch-step-done': state() === 'done',
+                         'nozzletouch-step-active': state() === 'active'}">
+      <span data-bind="text: label"></span>
+    </li>
+  </ol>
+
+  <!-- ko ifnot: running -->
+  <div class="alert alert-error">
+    <strong>The nozzles touch the plate.</strong>
+    Remove everything from the plate before you start. Keep filament loaded in both
+    nozzles. A run takes about <span data-bind="text: durationText"></span>, plus the
+    time you take to brush the nozzles.
+  </div>
+  <label class="checkbox" data-bind="visible: canCalibrate">
+    <input type="checkbox" data-bind="checked: plateClear">
+    The plate is clear, and both nozzles have filament.
+  </label>
+  <p class="text-error" data-bind="text: readyText, visible: readyText"></p>
+  <button class="btn btn-primary" data-bind="click: start, enable: canStart,
+          visible: canCalibrate">Start</button>
+  <!-- /ko -->
+
+  <!-- ko if: waitingForWipe -->
+  <div class="alert alert-info nozzletouch-wipe">
+    <h4>Brush the nozzles now</h4>
+    <p>
+      Both nozzles are hot. Brush each tip with a brass wire brush until no plastic is
+      left on it. Then press Continue.
+    </p>
+    <p>
+      If you do not press Continue, the heaters go off after
+      <span data-bind="text: wipeTimeoutMin"></span> min and the run stops.
+    </p>
+    <button class="btn btn-large btn-primary" data-bind="click: confirmWipe,
+            visible: canCalibrate">Continue</button>
+  </div>
+  <!-- /ko -->
+
+  <!-- ko if: running -->
+  <p class="nozzletouch-status" data-bind="visible: !waitingForWipe()">
+    <strong data-bind="text: phaseText"></strong>
+    <span data-bind="text: message"></span>
+  </p>
+  <div class="progress" data-bind="visible: total() > 0">
+    <div class="bar" data-bind="style: {width: percent() + '%'}"></div>
+  </div>
+  <button class="btn btn-danger" data-bind="click: abort">Stop</button>
+  <!-- /ko -->
+
+  <p class="text-error" data-bind="text: error, visible: error"></p>
+
+  <h5>Log</h5>
+  <pre id="nozzletouch_log" class="nozzletouch-log" data-bind="text: log"></pre>
+
+  <h4>Last result</h4>
+  <!-- ko ifnot: last -->
+  <p class="muted">No run has finished yet.</p>
+  <!-- /ko -->
+
+  <!-- ko if: last -->
+  <table class="table table-condensed nozzletouch-summary">
+    <tbody data-bind="foreach: summaryRows">
+      <tr><th data-bind="text: label"></th><td data-bind="text: value"></td></tr>
+    </tbody>
+  </table>
+
+  <div class="btn-group nozzletouch-views">
+    <button class="btn btn-small" data-bind="click: function () { view('shape'); },
+            css: {active: view() === 'shape'}">Plate shape</button>
+    <button class="btn btn-small" data-bind="click: function () { view('change'); },
+            css: {active: view() === 'change'}, enable: hasChange">Change from the old mesh</button>
+  </div>
+  <div class="nozzletouch-map" data-bind="html: mapSvg"></div>
+  <p class="muted nozzletouch-caption" data-bind="text: mapCaption"></p>
+
+  <h5>T1 height</h5>
+  <table class="table table-condensed nozzletouch-t1">
+    <thead>
+      <tr><th>Point</th><th>T0 trip, mm</th><th>T1 trip, mm</th><th>T1 minus T0, mm</th></tr>
+    </thead>
+    <tbody data-bind="foreach: t1Rows">
+      <tr>
+        <td data-bind="text: point"></td>
+        <td data-bind="text: t0"></td>
+        <td data-bind="text: t1"></td>
+        <td data-bind="text: diff"></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="alert nozzletouch-text">
+    Do not run the auto-level on the touchscreen. It replaces this mesh with its own,
+    which sits about 0.3 mm above the plate on a printer with the quick swap kit.
+  </div>
+  <!-- /ko -->
+</div>
