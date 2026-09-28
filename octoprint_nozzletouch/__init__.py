@@ -239,6 +239,8 @@ class NozzleTouchPlugin(
                 config = routine_config(self._config())
             except SettingsError as exception:
                 raise ValueError("the settings are not safe to run: %s" % exception)
+            # The user says the nozzles are already clean: no heat, retract or brush step.
+            config["skip_wipe"] = bool((data or {}).get("skip_wipe"))
             self._log.clear()
             self._progress = None
             self._last_error = None

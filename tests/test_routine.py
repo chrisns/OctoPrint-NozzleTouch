@@ -193,3 +193,45 @@ def test_result_reports_the_change_from_the_old_mesh():
     assert len(result["change"]) == 11 and len(result["change"][0]) == 11
     assert result["change_max"] == pytest.approx(max(abs(v) for col in result["change"] for v in col), abs=1e-3)
     assert result["probed_area"] == [52.0, 43.0, 304.0, pytest.approx(299.5)]
+
+
+def test_skip_wipe_touches_with_cold_nozzles_and_never_heats_them():
+    m = FakeSnapmaker(h1=-1.083, t1_drop=1.115)
+    said = []
+    cal = Calibration(FakeBridge(m), lambda: {"bed": 75.0, "tool0": 30.0, "tool1": 30.0},
+                      said.append, dict(FAST, skip_wipe=True), clock=FakeClock())
+    cal.run()
+    assert cal.phase == "done", cal.error
+    assert not any(p.get("type") == "wipe" for p in said)
+    assert not any(c.startswith("M104 T0 S2") or c.startswith("M104 T1 S2") for c in m.sent)
+    assert not any(" E-" in c for c in m.sent)                 # no retract
+    assert not any(c.startswith("M106") for c in m.sent)       # already cold: no fans
+    assert m.saved == 1
+
+
+def test_the_brush_step_does_not_wait_for_the_bed():
+    m = FakeSnapmaker()
+    order = []
+    bed = {"hot": False}
+
+    def temperatures():
+        cold = any(c.startswith("M104 T0 S0") for c in m.sent)
+        return {"bed": 75.0 if bed["hot"] else 30.0,
+                "tool0": 40.0 if cold else 240.0, "tool1": 40.0 if cold else 215.0}
+
+    cal = Calibration(FakeBridge(m), temperatures, order.append, FAST, clock=FakeClock())
+
+    def say(payload):
+        order.append(payload)
+        if payload.get("type") == "wipe":
+            cal.confirm_wipe()
+        if "Waiting for the bed" in payload.get("message", ""):
+            bed["hot"] = True                                   # the bed gets there later
+    cal._say = say
+    cal.run()
+    assert cal.phase == "done", cal.error
+    kinds = [p.get("type") for p in order]
+    msgs = [p.get("message", "") for p in order]
+    wipe = kinds.index("wipe")
+    wait_bed = next(i for i, t in enumerate(msgs) if "Waiting for the bed" in t)
+    assert wipe < wait_bed

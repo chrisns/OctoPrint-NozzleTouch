@@ -30,6 +30,7 @@ class FakeSnapmaker(object):
         self.levelling = True
         self.sent = []
         self.saved = 0
+        self.settled = None             # (x, y, z, tool) at the last M400 or G28
         n = 6
         self.grid = dict(n=n, start=(52.0, 43.0), spacing=(56.0, 57.0),
                          z=old_grid or [[42.0 + 0.002 * i for j in range(n)] for i in range(n)])
@@ -58,6 +59,19 @@ class FakeSnapmaker(object):
         tip = self.carriage() - (0.0 if tool == 0 else self.t1_drop)
         return tip <= self.plate(self.x, self.y) - self.overtravel + 1e-9
 
+    def settled_pressed(self, tool):
+        """The sensor as M119 reports it: from where the head was at the last M400.
+
+        The firmware answers M119 at once, while queued moves have not run yet."""
+        if self.settled is None:
+            return self.pressed(tool)
+        now = (self.x, self.y, self.z, self.tool)
+        self.x, self.y, self.z, self.tool = self.settled
+        try:
+            return self.pressed(tool)
+        finally:
+            self.x, self.y, self.z, self.tool = now
+
     # -- G-code -------------------------------------------------------------
 
     def execute(self, command):
@@ -84,8 +98,12 @@ class FakeSnapmaker(object):
                 self.z = z
         elif code == "G28":
             self.tool, self.z, self.relative = 0, 313.0, False
+            self.settled = (self.x, self.y, self.z, self.tool)
+        elif code == "M400":
+            self.settled = (self.x, self.y, self.z, self.tool)
         elif code in ("T0", "T1"):
             self.tool = int(code[1])
+            self.settled = (self.x, self.y, self.z, self.tool)
         elif code == "M211":
             self.soft_endstops = params.get("S", 1) != 0
         elif code == "M420":
@@ -104,8 +122,8 @@ class FakeSnapmaker(object):
         elif code == "M119":
             replies += ["Reporting endstop status", "z_min: open",
                         "z_probe_proximity_switch: open",
-                        "z_probe_left_optocoupler: %s" % ("TRIGGERED" if self.tool == 1 or self.pressed(0) else "open"),
-                        "z_probe_right_optocoupler: %s" % ("TRIGGERED" if self.tool == 0 or self.pressed(1) else "open")]
+                        "z_probe_left_optocoupler: %s" % ("TRIGGERED" if self.tool == 1 or self.settled_pressed(0) else "open"),
+                        "z_probe_right_optocoupler: %s" % ("TRIGGERED" if self.tool == 0 or self.settled_pressed(1) else "open")]
         elif code == "M114":
             replies.append("X:%.2f Y:%.2f Z:%.2f E:0.00 Count X:0 Y:0 Z:%d B:0"
                            % (self.x, self.y, self.z, int(round(self.carriage() * self.steps))))

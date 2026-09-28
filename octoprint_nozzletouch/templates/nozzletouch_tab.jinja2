@@ -25,6 +25,11 @@
     <input type="checkbox" data-bind="checked: plateClear">
     The plate is clear, and both nozzles have filament.
   </label>
+  <label class="checkbox" data-bind="visible: canCalibrate">
+    <input type="checkbox" data-bind="checked: skipWipe">
+    The nozzle tips are already clean. Skip the heat, retract and brush steps: the run heats
+    only the bed, cools the nozzles if they are warm, and starts touching.
+  </label>
   <p class="text-error" data-bind="text: readyText, visible: readyText"></p>
   <button class="btn btn-primary" data-bind="click: start, enable: canStart,
           visible: canCalibrate">Start</button>

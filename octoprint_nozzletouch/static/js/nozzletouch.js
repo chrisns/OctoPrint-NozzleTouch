@@ -47,6 +47,7 @@ $(function () {
         self.error = ko.observable("");
         self.settingsError = ko.observable("");
         self.plateClear = ko.observable(false);
+        self.skipWipe = ko.observable(false);
         self.view = ko.observable("shape");
 
         var wipeNotice = null;
@@ -283,7 +284,7 @@ $(function () {
 
         self.start = function () {
             self.error("");
-            OctoPrint.simpleApiCommand("nozzletouch", "start", {})
+            OctoPrint.simpleApiCommand("nozzletouch", "start", {skip_wipe: self.skipWipe()})
                 .done(function () {
                     self.running(true);
                     self.plateClear(false);

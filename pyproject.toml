@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "OctoPrint-NozzleTouch"
-version = "0.1.0"
+version = "0.1.1"
 description = "Levels the bed of a Snapmaker 2.0 dual extruder by touching the plate with the cold nozzle, and sets the T1 height."
 readme = "README.md"
 requires-python = ">=3.7,<4"

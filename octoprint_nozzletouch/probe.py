@@ -40,7 +40,10 @@ class Touch(object):
     def _state(self, commands, timeout=60.0):
         if self._aborted():
             raise Aborted()
-        lines = self._bridge.run(list(commands) + ["M119"], timeout)
+        # M400 first: the firmware answers M119 at once, before a queued move has run, so without
+        # it every reading shows the state one step behind (2026-09-27: the back-off step read
+        # TRIGGERED and every touch gave up).
+        lines = self._bridge.run(list(commands) + ["M400", "M119"], timeout)
         return gcode.optocoupler(lines, self._sensor), lines
 
     def at(self, x, y, hint, floor=None):

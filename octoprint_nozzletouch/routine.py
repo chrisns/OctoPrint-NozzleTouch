@@ -1,13 +1,14 @@
 # coding=utf-8
 """The calibration behind the button.
 
-1. Home, heat the bed and both nozzles.
+1. Home, and start heating the bed and both nozzles. Wait for the nozzles only.
 2. Retract both filaments, so the hot nozzles do not ooze, and park the head high.
 3. Wait for the user to brush both nozzles clean and press Continue. A dirty tip trips early:
    PETG on a nozzle read 0.2 to 0.38 mm high (2026-09-25). If nobody presses Continue, the
    heaters go off after a time limit.
-4. Cool the nozzles with the part fan, then let the plate settle. The bed stays hot, because
-   the mesh must be measured at print temperature.
+4. Cool the nozzles with the part fans, wait for the bed to reach its temperature, and let the
+   plate settle. The mesh must be measured at print temperature.
+   With skip_wipe, steps 1 to 3 do not run: the nozzles stay off, and are cooled if warm.
 5. Home again, and refuse to go on unless bed levelling is on and the stored mesh is sane.
    Then touch the reachable nodes of the firmware's 11 x 11 grid with the cold T0
    nozzle. Before every row, touch a reference point and take out its drift: while the
@@ -35,7 +36,7 @@ DEFAULTS = dict(
     park=[160.0, 30.0, 60.0], wipe_timeout_min=30, cool_below=55.0, settle_s=60, passes=2,
     trip_to_zero=mesh.TRIP_TO_ZERO, reference=[178.0, 171.0],
     offset_points=[[178.0, 171.0], [100.0, 100.0], [260.0, 100.0], [100.0, 250.0], [260.0, 250.0]],
-    write_offset=True, bed_off_at_end=True,
+    write_offset=True, bed_off_at_end=True, skip_wipe=False,
 )
 
 
@@ -111,11 +112,12 @@ class Calibration(threading.Thread):
 
     def _heat_and_retract(self):
         s = self._s
-        self._tell("heat", "Homing and heating: bed %d C, T0 %d C, T1 %d C."
-                   % (s["bed_temp"], s["t0_temp"], s["t1_temp"]))
+        self._tell("heat", "Homing and heating the nozzles: T0 %d C, T1 %d C. The bed heats to %d C "
+                           "meanwhile." % (s["t0_temp"], s["t1_temp"], s["bed_temp"]))
         self._bridge.run(["M140 S%d" % s["bed_temp"], "M104 T0 S%d" % s["t0_temp"],
                           "M104 T1 S%d" % s["t1_temp"], "G28"], 240.0)
-        self._wait_temps({"bed": s["bed_temp"], "tool0": s["t0_temp"], "tool1": s["t1_temp"]})
+        # Only the nozzles: the bed has until the nozzles are brushed and cold.
+        self._wait_temps({"tool0": s["t0_temp"], "tool1": s["t1_temp"]})
         self._tell("retract", "Retracting %.0f mm on both nozzles." % s["retract_mm"])
         for tool in (0, 1):
             self._bridge.run(["T%d" % tool, "M83", "G1 E-%.1f F1200" % s["retract_mm"]], 120.0)
@@ -134,15 +136,26 @@ class Calibration(threading.Thread):
             self._clock.sleep(0.5)
         self._check()
 
+    def _start_bed_only(self):
+        s = self._s
+        self._tell("heat", "Skipping the brush step. Homing, and heating the bed to %d C." % s["bed_temp"])
+        self._bridge.run(["M140 S%d" % s["bed_temp"], "M104 T0 S0", "M104 T1 S0", "G28"], 240.0)
+
     def _cool(self):
         s = self._s
-        self._tell("cool", "Cooling both nozzles below %.0f C with both part fans. The bed stays at %d C."
-                   % (s["cool_below"], s["bed_temp"]))
-        # Without P, M106 drives only the active nozzle's fan on the dual toolhead.
-        self._bridge.run(["M104 T0 S0", "M104 T1 S0", "M106 P0 S255", "M106 P1 S255"], 60.0)
-        self._wait_temps({"tool0": s["cool_below"], "tool1": s["cool_below"]}, below=True, timeout=1800)
-        self._bridge.run(["M107 P0", "M107 P1"], 30.0)
-        self._tell("cool", "Letting the plate settle for %d s without the fan." % s["settle_s"])
+        now = self._temperatures()
+        hot = [t for t in ("tool0", "tool1") if (now.get(t) or 0.0) > s["cool_below"]]
+        self._bridge.run(["M104 T0 S0", "M104 T1 S0"], 60.0)
+        if hot:
+            self._tell("cool", "Cooling both nozzles below %.0f C with both part fans."
+                       % s["cool_below"])
+            # Without P, M106 drives only the active nozzle's fan on the dual toolhead.
+            self._bridge.run(["M106 P0 S255", "M106 P1 S255"], 60.0)
+            self._wait_temps({"tool0": s["cool_below"], "tool1": s["cool_below"]}, below=True, timeout=1800)
+            self._bridge.run(["M107 P0", "M107 P1"], 30.0)
+        self._tell("cool", "Waiting for the bed to reach %d C." % s["bed_temp"])
+        self._wait_temps({"bed": s["bed_temp"]})
+        self._tell("cool", "Letting the plate settle for %d s." % s["settle_s"])
         self._wait(s["settle_s"])
 
     def _prepare(self):
@@ -286,8 +299,11 @@ class Calibration(threading.Thread):
 
     def _run(self, started):
         try:
-            self._heat_and_retract()
-            self._wait_for_wipe()
+            if self._s["skip_wipe"]:
+                self._start_bed_only()
+            else:
+                self._heat_and_retract()
+                self._wait_for_wipe()
             self._cool()
             steps, old_mesh, current = self._prepare()
             samples = self._probe_mesh(steps)

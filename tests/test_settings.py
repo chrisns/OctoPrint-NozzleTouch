@@ -8,6 +8,8 @@ from nt_pkg.settings import DEFAULTS, SettingsError, parse_points, routine_confi
 def test_defaults_pass_and_match_the_routine():
     config = routine_config(DEFAULTS)
     for key, value in routine.DEFAULTS.items():
+        if key == "skip_wipe":          # chosen for each run on the tab, not a setting
+            continue
         assert config[key] == pytest.approx(value) if isinstance(value, float) else config[key] == value
 
 

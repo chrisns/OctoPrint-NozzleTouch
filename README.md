@@ -45,13 +45,21 @@ On the author's printer, 2026-09-25:
 
 Two passes take about 65 min, plus the time you take to brush the nozzles.
 
+The bed heats while the nozzles heat, retract and wait for the brush. The run waits for the bed
+only when the nozzles are cold, just before the first touch.
+
+If the nozzle tips are already clean, tick "The nozzle tips are already clean" on the tab.
+The run then skips steps 1 to 3: it heats only the bed, cools the nozzles if they are warm,
+and starts touching.
+
 ## Safety
 
 **WARNING: The nozzles touch the plate. Remove everything from the plate before you
 start.**
 
 - The touch lowers the nozzle 0.1 mm at a time, then 0.02 mm at a time, and reads `M119`
-  after every step. It stops at the first trip. It never goes lower than 0.8 mm below the
+  after every step, after `M400`. The firmware answers `M119` at once, before a queued move has
+  run, so without `M400` every reading is one step behind. It stops at the first trip. It never goes lower than 0.8 mm below the
   expected trip (1.1 mm on a second try), and never below G-code Z -2.
 - The plugin does not use `G30`. On this firmware a `G30` probe move targets machine Z -2,
   and the plate sits at machine Z 42. A sensor that did not trip would drive the nozzle
