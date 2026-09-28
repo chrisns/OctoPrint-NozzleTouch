@@ -79,6 +79,18 @@
     </div>
   </div>
 
+  <div class="control-group">
+    <label class="control-label">Cold start soak, min</label>
+    <div class="controls">
+      <input type="number" step="1" class="input-mini"
+             data-bind="value: settings.plugins.nozzletouch.soak_min">
+      <span class="help-block">
+        If the bed starts more than 15 &deg;C below its target, the run waits this long after
+        the bed reaches temperature. A plate keeps moving for minutes after a cold start.
+      </span>
+    </div>
+  </div>
+
   <h4>Touch</h4>
   <div class="control-group">
     <label class="control-label">Passes</label>

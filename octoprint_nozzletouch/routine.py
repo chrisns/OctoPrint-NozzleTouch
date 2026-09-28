@@ -36,8 +36,12 @@ DEFAULTS = dict(
     park=[160.0, 30.0, 60.0], wipe_timeout_min=30, cool_below=55.0, settle_s=60, passes=2,
     trip_to_zero=mesh.TRIP_TO_ZERO, reference=[178.0, 171.0],
     offset_points=[[178.0, 171.0], [100.0, 100.0], [260.0, 100.0], [100.0, 250.0], [260.0, 250.0]],
-    write_offset=True, bed_off_at_end=True, skip_wipe=False,
+    write_offset=True, bed_off_at_end=True, skip_wipe=False, soak_min=10,
 )
+# A bed that starts this far below its target has a plate that keeps moving for minutes after
+# the heater reaches temperature. 2026-09-28: a cold start with only the settle time gave passes
+# 0.24 mm apart and T1 0.22 mm off.
+COLD_BED_MARGIN = 15.0
 
 
 class CalibrationError(Exception):
@@ -61,6 +65,7 @@ class Calibration(threading.Thread):
         self.phase = "starting"
         self.result = None
         self.error = None
+        self._bed_at_start = None
 
     # -- control from the plugin -----------------------------------------
 
@@ -155,6 +160,11 @@ class Calibration(threading.Thread):
             self._bridge.run(["M107 P0", "M107 P1"], 30.0)
         self._tell("cool", "Waiting for the bed to reach %d C." % s["bed_temp"])
         self._wait_temps({"bed": s["bed_temp"]})
+        started = self._bed_at_start
+        if started is not None and started < s["bed_temp"] - COLD_BED_MARGIN and s["soak_min"]:
+            self._tell("cool", "The bed started cold (%.0f C). Letting the plate soak for %d min."
+                       % (started, s["soak_min"]))
+            self._wait(s["soak_min"] * 60.0)
         self._tell("cool", "Letting the plate settle for %d s." % s["settle_s"])
         self._wait(s["settle_s"])
 
@@ -298,6 +308,7 @@ class Calibration(threading.Thread):
         self._say(outcome)
 
     def _run(self, started):
+        self._bed_at_start = (self._temperatures() or {}).get("bed")
         try:
             if self._s["skip_wipe"]:
                 self._start_bed_only()

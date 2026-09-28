@@ -29,6 +29,7 @@ DEFAULTS = dict(
     wipe_timeout_min=30,
     cool_below=55.0,
     settle_s=60,
+    soak_min=10,
     passes=2,
     trip_to_zero=mesh.TRIP_TO_ZERO,
     reference="178, 171",
@@ -47,10 +48,11 @@ RANGES = dict(
     wipe_timeout_min=(1, 240),
     cool_below=(30.0, 70.0),
     settle_s=(0, 900),
+    soak_min=(0, 60),
     passes=(1, 4),
     trip_to_zero=(0.3, 1.2),
 )
-INTEGERS = ("bed_temp", "t0_temp", "t1_temp", "wipe_timeout_min", "settle_s", "passes")
+INTEGERS = ("bed_temp", "t0_temp", "t1_temp", "wipe_timeout_min", "settle_s", "soak_min", "passes")
 BOOLEANS = ("write_offset", "bed_off_at_end", "fix_split_ok")
 
 # The nodes the nozzle touches. Reference and offset points must sit inside them, so that

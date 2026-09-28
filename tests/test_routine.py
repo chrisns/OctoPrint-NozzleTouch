@@ -235,3 +235,40 @@ def test_the_brush_step_does_not_wait_for_the_bed():
     wipe = kinds.index("wipe")
     wait_bed = next(i for i, t in enumerate(msgs) if "Waiting for the bed" in t)
     assert wipe < wait_bed
+
+
+def test_a_cold_bed_soaks_before_the_first_touch():
+    m = FakeSnapmaker()
+    clock = FakeClock()
+    state = {"bed": 25.0}
+    marks = {}
+
+    def temperatures():
+        return {"bed": state["bed"], "tool0": 30.0, "tool1": 30.0}
+
+    cal = Calibration(FakeBridge(m), temperatures, lambda p: None,
+                      dict(FAST, skip_wipe=True, soak_min=10), clock=clock)
+
+    def say(payload):
+        message = payload.get("message", "")
+        if "Waiting for the bed" in message:
+            state["bed"] = 75.0
+            marks["hot"] = clock.now
+        if "soak" in message:
+            marks["soak_sent"] = len(m.sent)
+    cal._say = say
+    cal.run()
+    assert cal.phase == "done", cal.error
+    first_touch = next(i for i, c in enumerate(m.sent) if c.startswith("G1 Z"))
+    assert first_touch >= marks["soak_sent"]
+    assert clock.now - marks["hot"] >= 600
+
+
+def test_a_hot_bed_does_not_soak():
+    m = FakeSnapmaker()
+    said = []
+    cal = Calibration(FakeBridge(m), lambda: {"bed": 75.0, "tool0": 30.0, "tool1": 30.0},
+                      said.append, dict(FAST, skip_wipe=True, soak_min=10), clock=FakeClock())
+    cal.run()
+    assert cal.phase == "done", cal.error
+    assert not any("soak" in p.get("message", "") for p in said)
