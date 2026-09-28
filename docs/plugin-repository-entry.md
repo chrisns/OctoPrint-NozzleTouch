@@ -22,6 +22,19 @@ tags:
 - snapmaker
 - dual extruder
 
+screenshots:
+- url: /assets/img/plugins/nozzletouch/tab-result.png
+  alt: The Nozzle Touch tab after a run
+  caption: The summary, the mesh map and the T1 touches after a run
+- url: /assets/img/plugins/nozzletouch/tab-brush.png
+  alt: The tab while the run waits for the brush step
+  caption: The run waits while you brush the nozzles
+- url: /assets/img/plugins/nozzletouch/settings.png
+  alt: The plugin settings
+  caption: Every value is checked before it reaches a G-code command
+
+featuredimage: /assets/img/plugins/nozzletouch/tab-result.png
+
 compatibility:
   octoprint:
   - 1.8.0

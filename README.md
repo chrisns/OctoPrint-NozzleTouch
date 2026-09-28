@@ -4,6 +4,11 @@ Levels the bed of a Snapmaker 2.0 A350 with the dual extruder toolhead. The cold
 touches the plate at every node of the firmware's 11 x 11 mesh. The plugin then sets the
 height of the T1 nozzle from touches of both nozzles. One button runs the whole sequence.
 
+![The Nozzle Touch tab after a run: the summary, the mesh map and the T1 table](docs/tab-result.png)
+
+The tab after a real run on the author's printer, 2026-09-28: the summary, the plate shape and
+the T1 touches.
+
 ## Why the nozzle is the probe
 
 The dual toolhead's own auto-level measures the plate with an inductive sensor. That sensor
@@ -51,6 +56,11 @@ only when the nozzles are cold, just before the first touch.
 If the nozzle tips are already clean, tick "The nozzle tips are already clean" on the tab.
 The run then skips steps 1 to 3: it heats only the bed, cools the nozzles if they are warm,
 and starts touching.
+
+![The tab while the run waits for the brush step](docs/tab-brush.png)
+
+The run waits for the brush step. The step list shows where the run is, and a notification
+tells you when to brush.
 
 ## Safety
 
@@ -163,6 +173,8 @@ deciding who may run it.
 | Write T1 offset | on | Sends `M218 T1 Z`. The toolhead stores it at once. |
 | Bed off at end | on | Turns the bed off after the run. |
 | Restore lost ok | on | Also outside a run. See above. |
+
+![The plugin settings in OctoPrint](docs/settings.png)
 
 ## The numbers behind it
 
